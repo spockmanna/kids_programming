@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Build & Ship Your Own Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0d0d12;
+      font-family: Georgia, serif;
+      padding: 40px 20px;
+      color: #f0ede8;
+    }
+
+    .container { max-width: 660px; margin: 0 auto; }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(38px, 9vw, 64px);
+      line-height: 1.05;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #f97316 0%, #8b5cf6 50%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #777;
+      font-size: 15px;
+      line-height: 1.65;
+      max-width: 480px;
+      margin-bottom: 48px;
+    }
+
+    /* Timeline */
+    .timeline { position: relative; }
+
+    .timeline-line {
+      position: absolute;
+      left: 27px;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, #f97316, #3b82f6, #8b5cf6, #10b981);
+      opacity: 0.25;
+    }
+
+    .step-row {
+      display: flex;
+      gap: 22px;
+      margin-bottom: 20px;
+      align-items: flex-start;
+    }
+
+    .step-icon {
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      background: #1a1a24;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      position: relative; z-index: 1;
+      border: 2px solid var(--color);
+    }
+
+    .step-icon.open {
+      background: var(--color);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--color) 30%, transparent);
+    }
+
+    .step-card {
+      flex: 1;
+      background: #14141b;
+      border: 1px solid #222230;
+      border-radius: 14px;
+      padding: 18px 22px;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.2s;
+    }
+
+    .step-card:hover { transform: translateY(-2px); }
+
+    .step-card.open {
+      background: #18181f;
+      border-color: color-mix(in srgb, var(--color) 35%, transparent);
+      box-shadow: 0 4px 28px color-mix(in srgb, var(--color) 12%, transparent);
+    }
+
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .step-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--color);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .step-card h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      margin-top: 3px;
+      color: #f0ede8;
+    }
+
+    .chevron { color: #444; font-size: 18px; margin-left: 12px; }
+
+    .step-body { margin-top: 18px; display: none; }
+    .step-body.open { display: block; }
+
+    .vibe-text {
+      color: #555;
+      font-style: italic;
+      font-size: 12px;
+      margin-bottom: 18px;
+      border-left: 2px solid color-mix(in srgb, var(--color) 20%, transparent);
+      padding-left: 10px;
+      line-height: 1.5;
+    }
+
+    .task-list { list-style: none; }
+
+    .task-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+      align-items: flex-start;
+      animation: fadeIn 0.2s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .task-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--color);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--color);
+    }
+
+    .task-text {
+      font-size: 14px;
+      color: #ddd8d0;
+      line-height: 1.45;
+      margin-bottom: 5px;
+    }
+
+    .task-tip {
+      font-size: 12px;
+      color: #555;
+      font-style: italic;
+      line-height: 1.45;
+    }
+
+    /* Prompt box */
+    .prompt-box {
+      margin-top: 10px;
+      background: #0d0d12;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .prompt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .prompt-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: #8b5cf6;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .copy-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: #777;
+      background: #1e1e2e;
+      border: 1px solid #333;
+      border-radius: 5px;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .copy-btn:hover { background: #3b3b50; }
+    .copy-btn.copied { color: #10b981; }
+
+    .prompt-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: #a09898;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    /* Hints */
+    .hints-box {
+      margin-top: 36px;
+      padding: 26px;
+      background: #14141b;
+      border: 1px solid #222230;
+      border-radius: 14px;
+    }
+
+    .hints-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+    }
+
+    .hint-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+      align-items: flex-start;
+    }
+
+    .hint-icon { font-size: 17px; flex-shrink: 0; }
+
+    .hint-text {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.55;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 36px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: #333;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <p class="eyebrow">Your 1-Hour Guide</p>
+  <h1>Build &amp; Ship<br>Your Own Game</h1>
+  <p class="subtitle">Today you'll pick a game idea, use AI to build it, and put it live on the internet — all in an hour. No experience needed.</p>
+
+  <div class="timeline">
+    <div class="timeline-line"></div>
+
+    <!-- Steps injected by JS -->
+    <div id="steps"></div>
+  </div>
+
+  <div class="hints-box">
+    <p class="hints-label">Helpful Tips</p>
+    <div id="hints"></div>
+  </div>
+
+  <p class="footer">TAP EACH STEP TO EXPAND</p>
+</div>
+
+<script>
+const steps = [
+  {
+    id: 1, emoji: "🐙", title: "GitHub Account", duration: "10 min", color: "#f97316",
+    vibe: "First stop — your very own GitHub account. Every developer in the world has one of these.",
+    tasks: [
+      { text: "Go to github.com and sign up", tip: "Pick a username you're proud of — this is your developer identity. Choose wisely!" },
+      { text: "Check your email and verify your account", tip: null },
+      { text: "Take a quick look around: repos, files, the green commit graph", tip: "Think of GitHub as a time machine for your code. Every save is a snapshot you can go back to." },
+    ],
+  },
+  {
+    id: 2, emoji: "💻", title: "Set Up VS Code", duration: "5 min", color: "#3b82f6",
+    vibe: "Get your workspace ready. You're about to build something real.",
+    tasks: [
+      { text: "Open VS Code and create a new folder for your project", tip: "Name it after your game — something like space-shooter or cookie-clicker." },
+      { text: "Create a file inside that folder called index.html", tip: null },
+      { text: "Open the Agent panel on the side", tip: "This is your AI coding partner. You describe what you want, it writes the code." },
+    ],
+  },
+  {
+    id: 3, emoji: "🎮", title: "Build Your Game", duration: "35 min", color: "#8b5cf6",
+    vibe: "This is the main event. You're the director — the agent is your developer. Describe what you want, see it appear, then improve it.",
+    tasks: [
+      { text: "Decide what game you want to make", tip: "You've got 60 seconds — don't overthink it! Some ideas: dodge the falling objects, click the target before it moves, a simple platformer, whack-a-mole. Your call." },
+      {
+        text: "Type this prompt into the VS Code agent — swap [YOUR IDEA] for your game",
+        tip: null,
+        isPrompt: true,
+        prompt: `Create an HTML file for a basic web game about [YOUR IDEA]. The entire game should be in a single index.html file with no external dependencies. Include:
+- A canvas or simple DOM-based game area
+- A score counter
+- A start screen with the game title
+- Basic keyboard or mouse controls
+- A game over screen showing the final score
+Keep the code simple and well-commented so a beginner can understand it.`,
+      },
+      { text: "Accept the code, then open index.html in your browser to see it running", tip: "It's alive! Don't worry if it's rough — that's what the next steps are for." },
+      { text: "Round 1 — Make it yours: change the title, colors, and any text you want", tip: "Talk to the agent in plain English: \"Change the background to dark blue and make the score text yellow.\" You don't need to touch the code directly." },
+      { text: "Round 2 — Add a feature you came up with yourself", tip: "What would make your game more fun? A lives counter? Speed that increases over time? A character with a name? Ask the agent to add it." },
+      { text: "Round 3 — Add one more thing, or fix something that bugs you", tip: "This is your game — make it exactly how you want it. If something feels wrong, describe it to the agent and ask it to fix it." },
+    ],
+  },
+  {
+    id: 4, emoji: "🚀", title: "Publish Your Game", duration: "10 min", color: "#10b981",
+    vibe: "The big moment. In a few minutes you'll have a real URL you can text your friends tonight.",
+    tasks: [
+      { text: "Go to github.com → click New repository → name it after your game → set it to Public", tip: null },
+      { text: "Drag and drop your index.html file into the repository", tip: "No complicated steps — GitHub's website lets you upload files directly." },
+      { text: "Go to Settings → Pages → under Branch, select main → click Save", tip: "GitHub Pages is completely free for public repos. No credit card, no hosting fees — ever." },
+      { text: "Wait about 2 minutes → your live URL will appear: yourusername.github.io/your-game-name", tip: "Be patient — it can take a minute or two to go live. Refresh the page if you don't see it yet." },
+      { text: "Share your URL with everyone in the room 🎉", tip: "You just put a game on the internet. Anyone in the world can play it." },
+    ],
+  },
+];
+
+const hints = [
+  { icon: "🗣️", text: "Be specific with the agent. Instead of \"make it better\", try \"make the player move faster and add a red trail behind it\"." },
+  { icon: "💥", text: "If the agent breaks something, don't panic. Just describe what went wrong and ask it to fix it. That's normal — even for professional developers." },
+  { icon: "🤔", text: "Stuck on what to add? Ask yourself: what's the most annoying thing about my game right now? Then fix that." },
+];
+
+let openStep = null;
+let copiedStep = null;
+
+function render() {
+  const container = document.getElementById('steps');
+  container.innerHTML = steps.map((step, idx) => {
+    const isOpen = openStep === idx;
+    return `
+      <div class="step-row">
+        <div class="step-icon ${isOpen ? 'open' : ''}" style="--color:${step.color}" onclick="toggle(${idx})">${step.emoji}</div>
+        <div class="step-card ${isOpen ? 'open' : ''}" style="--color:${step.color}" onclick="toggle(${idx})">
+          <div class="step-header">
+            <div>
+              <div class="step-label">Step ${step.id} · ${step.duration}</div>
+              <h2>${step.title}</h2>
+            </div>
+            <span class="chevron">${isOpen ? '▴' : '▾'}</span>
+          </div>
+          <div class="step-body ${isOpen ? 'open' : ''}">
+            <p class="vibe-text">${step.vibe}</p>
+            <ul class="task-list">
+              ${step.tasks.map((task, ti) => `
+                <li class="task-item" style="animation-delay:${ti * 55}ms">
+                  <div class="task-num" style="--color:${step.color}">${ti + 1}</div>
+                  <div style="flex:1">
+                    <p class="task-text">${task.text}</p>
+                    ${task.tip ? `<p class="task-tip">💡 ${task.tip}</p>` : ''}
+                    ${task.isPrompt ? `
+                      <div class="prompt-box" onclick="event.stopPropagation()">
+                        <div class="prompt-header">
+                          <span class="prompt-label">Your Starter Prompt</span>
+                          <button class="copy-btn ${copiedStep === idx ? 'copied' : ''}" onclick="copyPrompt(event, ${idx}, ${ti})">${copiedStep === idx ? '✓ copied' : 'copy'}</button>
+                        </div>
+                        <pre class="prompt-text">${escapeHtml(task.prompt)}</pre>
+                      </div>` : ''}
+                  </div>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('hints').innerHTML = hints.map(h => `
+    <div class="hint-row">
+      <span class="hint-icon">${h.icon}</span>
+      <p class="hint-text">${h.text}</p>
+    </div>
+  `).join('');
+}
+
+function toggle(idx) {
+  openStep = openStep === idx ? null : idx;
+  render();
+}
+
+function copyPrompt(e, stepIdx, taskIdx) {
+  e.stopPropagation();
+  const text = steps[stepIdx].tasks[taskIdx].prompt;
+  navigator.clipboard.writeText(text).then(() => {
+    copiedStep = stepIdx;
+    render();
+    setTimeout(() => { copiedStep = null; render(); }, 2000);
+  });
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+render();
+</script>
+</body>
+</html>
